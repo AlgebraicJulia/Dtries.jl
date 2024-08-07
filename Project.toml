@@ -4,10 +4,12 @@ authors = ["Owen Lynch <root@owenlynch.org>"]
 version = "0.1.0"
 
 [deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 AssociatedTests = "e00e7eca-deca-4415-9dc4-9b3efe792c16"
-Moshi = "2e0e35c7-a2e4-4343-998d-7ef72827ed2d"
+MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-Moshi = "0.3.1"
+AbstractTrees = "0.4.5"
+MLStyle = "0.4.17"
 Test = "1.11.0"
