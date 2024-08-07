@@ -64,7 +64,24 @@ function Base.:(==)(d1::NED, d2::NED)
 end
 
 @tests NonEmptyDtry.Type begin
-  @test Node([:home => Leaf(Ref(1))]) isa NED
+  
+    @test Node([:home => leaf(1)]) isa NED
+    @test Node([:home => leaf(1), :work => leaf(2)]) isa NED
+    @test Node([:home => leaf(1)
+                ,:work => leaf(2)
+                ,:library => Node([:coffee => leaf(3)
+                                   ,:donut => leaf(4)])]) isa NED
+end
+
+function Base.map(f, return_type::Type, t::NED)
+  @match t begin
+    Leaf(v) => leaf(f(v))
+    Node(bs) => node(
+      map(bs) do (n, t′)
+        (n => map(f, return_type, t′))
+      end
+    )
+  end
 end
 
 # TODO:
