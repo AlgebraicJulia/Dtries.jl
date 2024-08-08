@@ -1,4 +1,4 @@
-# Dtrys.jl: an implementation of directories in Julia
+# Dtries.jl: an implementation of directories in Julia
 
 ## TODO:
 

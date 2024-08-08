@@ -1,3 +1,3 @@
-using Dtrys, AssociatedTests
+using Dtries, AssociatedTests
 
-test(Dtrys)
+test(Dtries)

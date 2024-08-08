@@ -1,4 +1,4 @@
-using .NonEmptyDtrys: NED
+using .NonEmptyDtries: NED
 using .SortedMaps
 using MLStyle
 import AbstractTrees
@@ -48,20 +48,20 @@ export NonEmpty
 end
 
 @tests NonEmpty begin
-    @test typeof(NonEmpty(NonEmptyDtrys.Leaf(2))) == Dtry{Int}
-    @test (@match NonEmpty(NonEmptyDtrys.Leaf(2)) begin
+    @test typeof(NonEmpty(NonEmptyDtries.Leaf(2))) == Dtry{Int}
+    @test (@match NonEmpty(NonEmptyDtries.Leaf(2)) begin
         NonEmpty(_) => true
         _ => false
     end)
-    @test (@match NonEmpty(NonEmptyDtrys.Leaf(2)) begin
-        NonEmpty(t) => t == NonEmptyDtrys.Leaf(2)
+    @test (@match NonEmpty(NonEmptyDtries.Leaf(2)) begin
+        NonEmpty(t) => t == NonEmptyDtries.Leaf(2)
         _ => false
     end)
 end
 
 struct Leaf{A}
     function Leaf{A}(x::A) where {A}
-        Dtry{A}(NonEmptyDtrys.Leaf{A}(x))
+        Dtry{A}(NonEmptyDtries.Leaf{A}(x))
     end
 
     function Leaf(x::A) where {A}
@@ -72,13 +72,13 @@ export Leaf
 
 @active Leaf(t) begin
     @match content(t) begin
-        NonEmptyDtrys.Leaf(v) => Some(v)
+        NonEmptyDtries.Leaf(v) => Some(v)
         _ => nothing
     end
 end
 
 @tests Leaf begin
-    @test content(Leaf(1)) == NonEmptyDtrys.Leaf(1)
+    @test content(Leaf(1)) == NonEmptyDtries.Leaf(1)
     @test (@match Leaf(1) begin
         Leaf(x) => x[]
         _ => nothing
@@ -87,7 +87,7 @@ end
 
 struct Node{A}
     function Node{A}(m::SortedMap{Symbol,NED{A}}) where {A}
-        Dtry{A}(NonEmptyDtrys.Node{A}(m))
+        Dtry{A}(NonEmptyDtries.Node{A}(m))
     end
 
     function Node(m::SortedMap{Symbol,NED{A}}) where {A}
@@ -102,7 +102,7 @@ struct Node{A}
                 Empty() => nothing
             end
         end
-        Dtry{A}(NonEmptyDtrys.Node{A}(SortedMap{Symbol,NED{A}}(nonempties, true)))
+        Dtry{A}(NonEmptyDtries.Node{A}(SortedMap{Symbol,NED{A}}(nonempties, true)))
     end
 
     function Node(m::SortedMap{Symbol,Dtry{A}}) where {A}
@@ -124,14 +124,14 @@ end
 export Node
 
 @tests Node begin
-    @test Node(SortedMap(:a => NonEmptyDtrys.Leaf(1))) isa Dtry{Int}
+    @test Node(SortedMap(:a => NonEmptyDtries.Leaf(1))) isa Dtry{Int}
     @test Node(SortedMap(:a => Leaf(1))) isa Dtry{Int}
-    @test content(Node(:a => Leaf(2))) == NonEmptyDtrys.Node(SortedMap(:a => NonEmptyDtrys.Leaf(2)))
+    @test content(Node(:a => Leaf(2))) == NonEmptyDtries.Node(SortedMap(:a => NonEmptyDtries.Leaf(2)))
 end
 
 @active Node(m) begin
     @match content(m) begin
-        NonEmptyDtrys.Node(m) => Some(m)
+        NonEmptyDtries.Node(m) => Some(m)
         _ => nothing
     end
 end
@@ -179,7 +179,7 @@ end
 end
 
 function singleton(p::AbstractPath, x::A, B::Type=A) where {A}
-    Dtry{B}(NonEmptyDtrys.singleton(p, x, B))
+    Dtry{B}(NonEmptyDtries.singleton(p, x, B))
 end
 
 @tests singleton begin
@@ -191,7 +191,7 @@ end
 function lookup(d::Dtry, p::AbstractPath)
     @match d begin
         Empty() => nothing
-        NonEmpty(t) => NonEmptyDtrys.lookup(t, p)
+        NonEmpty(t) => NonEmptyDtries.lookup(t, p)
     end
 end
 
@@ -229,8 +229,8 @@ end
 
 function setatpath!(d::Dtry{A}, v::A, p::AbstractPath) where {A}
     @match d begin
-        Empty() => (d.content = NonEmptyDtrys.singleton(p, v))
-        NonEmpty(t) => NonEmptyDtrys.setatpath!(t, v, p)
+        Empty() => (d.content = NonEmptyDtries.singleton(p, v))
+        NonEmpty(t) => NonEmptyDtries.setatpath!(t, v, p)
     end
 end
 
@@ -341,7 +341,7 @@ end
 end
 
 function flatmap(f, ::Type{B}, d::Dtry{A})::Dtry{B} where {A, B}
-    Dtry{B}(NonEmptyDtrys.flatfiltermap(d -> content(f(d)), B, content(d)))
+    Dtry{B}(NonEmptyDtries.flatfiltermap(d -> content(f(d)), B, content(d)))
 end
 
 @tests flatmap begin
