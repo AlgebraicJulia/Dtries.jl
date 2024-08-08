@@ -336,3 +336,28 @@ end
     @test Dtry([:a] => 2) == Node(:a => Leaf(2))
     @test_throws Exception Dtry([:a] => 2, [:a, :b] => 3)
 end
+
+function flatmap(f, ::Type{B}, d::Dtry{A})::Dtry{B} where {A, B}
+    Dtry{B}(NonEmptyDtrys.flatfiltermap(d -> content(f(d)), B, content(d)))
+end
+
+@tests flatmap begin
+    d1 = flatmap(
+        x -> iseven(x) ? Node(:x => Leaf(x)) : Empty{Int}(),
+        Int,
+        Node(:a => Leaf(1), :b => Leaf(2))
+    )
+    d2 = Node(:b => Node(:x => Leaf(2)))
+    @test d1 == d2
+end
+
+function flatten(d::Dtry{Dtry{A}})::Dtry{A} where {A}
+    flatmap(identity, A, d)
+end
+
+@tests flatten begin
+    @test flatten(Node(:a => Leaf(Node(:b => Leaf(1))))) == Node(:a => Node(:b => Leaf(1)))
+    d1 = flatten(Node(:a => Leaf(Empty{Int}()), :b => Leaf(Node(:c => Leaf(2)))))
+    d2 = Node(:b => Node(:c => Leaf(2)))
+    @test d1 == d2
+end

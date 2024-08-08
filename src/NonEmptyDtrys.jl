@@ -106,7 +106,11 @@ end
 function Base.show(io::IO, t::NED{A}) where {A}
     @match t begin
         Leaf(v) => print(io, "Leaf(", v[], ")")
-        Node(bs) => print(io, "Node(", bs..., ")")
+        Node(bs) => begin
+            print(io, "Node(")
+            join(io, bs, ", ")
+            print(io, ")")
+        end
     end
 end
 
@@ -328,11 +332,59 @@ end
 
 Base.keys(t) = Base.propertynames(t)
 
-function flatten(t::NED{A}) where {A}
+"""
+f::A -> NED{B}
+"""
+function flatmap(f, ::Type{B}, t::NED{A})::NED{B} where {A, B}
     @match t begin
-        Leaf(v) => v[]
-        Node(bs) => Node(n => flatten(v) for (n, v) in bs)
+        Leaf(v) => f(v[])::NED{B}
+        Node(bs) => Node{B}(
+            SortedMap{Symbol, NED{B}}([n => flatmap(f, B, v) for (n, v) in pairs(bs)], true)
+        )
     end
+end
+
+@tests flatmap begin
+    t1 = flatmap(x -> Node(:a => Leaf(x), :b => Leaf(x)), Int, Node(:x => Leaf(1), :y => Leaf(2)))
+    t2 = Node(:x => Node(:a => Leaf(1), :b => Leaf(1)), :y => Node(:a => Leaf(2), :b => Leaf(2)))
+    @test t1 == t2
+end
+
+"""
+f::A -> Union{NED{B}, Nothing}
+
+For use in `flatmap` for Dtrys
+"""
+function flatfiltermap(f, ::Type{B}, t::NED{A})::Union{NED{B}, Nothing} where {A, B}
+    @match t begin
+        Leaf(v) => f(v[])::Union{NED{B}, Nothing}
+        Node(bs) => begin
+            bs2 = Pair{Symbol, NED{B}}[]
+            for (n, v) in pairs(bs)
+                v2 = flatfiltermap(f, B, v)
+                if !isnothing(v2)
+                    push!(bs2, n => v2)
+                end
+            end
+            if !isempty(bs2)
+                Node{B}(SortedMap{Symbol, NED{B}}(bs2, true))
+            end
+        end
+    end
+end
+
+@tests flatfiltermap begin
+    t1 = flatfiltermap(x -> iseven(x) ? Node(:a => Leaf(x)) : nothing, Int, Node(:a => Leaf(2), :b => Leaf(1)))
+    t2 = Node(:a => Node(:a => Leaf(2)))
+    @test t1 == t2
+end
+
+function flatten(t::NED{NED{A}}) where {A}
+    flatmap(identity, A, t)
+end
+
+@tests flatten begin
+    @test flatten(Node(:a => Leaf(Node(:b => Leaf(1))))) == Node(:a => Node(:b => Leaf(1)))
 end
 
 end
