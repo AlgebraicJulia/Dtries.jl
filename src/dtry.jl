@@ -327,14 +327,17 @@ function Dtry{A}(pairs...) where {A}
     frompairs([pairs...], A)
 end
 
-function Dtry(pairs...)
-    frompairs([pairs...])
+# We don't allow Dtry(), because that would have to be typed as Dtry{Any}, which
+# would lead to pain and suffering
+function Dtry(pair, pairs...)
+    frompairs([pair, pairs...])
 end
 
 @tests Dtry begin
     @test Dtry(Path([:a]) => 2) == Node(:a => Leaf(2))
     @test Dtry([:a] => 2) == Node(:a => Leaf(2))
     @test_throws Exception Dtry([:a] => 2, [:a, :b] => 3)
+    @test_throws MethodError Dtry()
 end
 
 function flatmap(f, ::Type{B}, d::Dtry{A})::Dtry{B} where {A, B}
