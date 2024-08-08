@@ -1,5 +1,5 @@
 using .NonEmptyDtries: NED
-using .SortedMaps
+using .NonEmptySortedMaps
 using MLStyle
 import AbstractTrees
 
@@ -86,15 +86,15 @@ end
 end
 
 struct Node{A}
-    function Node{A}(m::SortedMap{Symbol,NED{A}}) where {A}
+    function Node{A}(m::NESM{Symbol,NED{A}}) where {A}
         Dtry{A}(NonEmptyDtries.Node{A}(m))
     end
 
-    function Node(m::SortedMap{Symbol,NED{A}}) where {A}
+    function Node(m::NESM{Symbol,NED{A}}) where {A}
         Node{A}(m)
     end
 
-    function Node{A}(m::SortedMap{Symbol,Dtry{A}}) where {A}
+    function Node{A}(m::NESM{Symbol,Dtry{A}}) where {A}
         nonempties = Pair{Symbol,NED{A}}[]
         for (n, d) in pairs(m)
             @match d begin
@@ -102,10 +102,10 @@ struct Node{A}
                 Empty() => nothing
             end
         end
-        Dtry{A}(NonEmptyDtries.Node{A}(SortedMap{Symbol,NED{A}}(nonempties, true)))
+        Dtry{A}(NonEmptyDtries.Node{A}(NESM{Symbol,NED{A}}(nonempties, true)))
     end
 
-    function Node(m::SortedMap{Symbol,Dtry{A}}) where {A}
+    function Node(m::NESM{Symbol,Dtry{A}}) where {A}
         Node{A}(m)
     end
 
@@ -113,20 +113,20 @@ struct Node{A}
         if isempty(pairs)
             Empty{A}()
         else
-            Node{A}(SortedMap(pairs...))
+            Node{A}(NESM(pairs...))
         end
     end
 
     function Node(pair::Pair{Symbol,Dtry{A}}, pairs...) where {A}
-        Node{A}(SortedMap(pair, pairs...))
+        Node{A}(NESM(pair, pairs...))
     end
 end
 export Node
 
 @tests Node begin
-    @test Node(SortedMap(:a => NonEmptyDtries.Leaf(1))) isa Dtry{Int}
-    @test Node(SortedMap(:a => Leaf(1))) isa Dtry{Int}
-    @test content(Node(:a => Leaf(2))) == NonEmptyDtries.Node(SortedMap(:a => NonEmptyDtries.Leaf(2)))
+    @test Node(NESM(:a => NonEmptyDtries.Leaf(1))) isa Dtry{Int}
+    @test Node(NESM(:a => Leaf(1))) isa Dtry{Int}
+    @test content(Node(:a => Leaf(2))) == NonEmptyDtries.Node(NESM(:a => NonEmptyDtries.Leaf(2)))
 end
 
 @active Node(m) begin
