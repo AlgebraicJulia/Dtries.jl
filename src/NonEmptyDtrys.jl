@@ -17,12 +17,14 @@ struct NodeStorage{X}
     branches::SortedMap{Symbol,X}
 end
 
+# A NED is a Non-Empty Dtry
 struct NED{A}
     content::Union{LeafStorage{A},NodeStorage{NED{A}}}
 end
 
 content(t::NED) = getfield(t, :content)
 
+# Leaves are childless nodes which construct NEDs whose content is a LeafStorage struct
 struct Leaf{A} end
 
 Leaf{A}(x::A) where {A} = NED{A}(LeafStorage{A}(Ref{A}(x)))
@@ -42,8 +44,10 @@ end
     @test typeof(Leaf{Real}(1)) == NED{Real}
 end
 
+## Nodes are vertices on a NED
 struct Node{A} end
 
+# They may consume a SortedMap and return a NED with a NodeStorage value
 function Node{A}(m::SortedMap{Symbol,NED{A}}) where {A}
     NED{A}(NodeStorage{NED{A}}(m))
 end
@@ -52,6 +56,7 @@ function Node(m::SortedMap{Symbol,NED{A}}) where {A}
     Node{A}(m)
 end
 
+# They may also consume pairs Symbol => NED and produce a SortedMap
 function Node(pair::Pair{Symbol,NED{A}}, pairs...) where {A}
     Node(SortedMap{Symbol,NED{A}}(pair, pairs...))
 end
@@ -60,8 +65,6 @@ end
     c = content(t)
     if c isa NodeStorage
         Some(c.branches)
-    else
-        nothing
     end
 end
 
@@ -118,6 +121,7 @@ function Base.show(io::IO, ::MIME"text/plain", t::NED{A}) where {A}
     AbstractTrees.print_tree(io, t; printkeys=true)
 end
 
+# Given a NED, produce
 function Base.map(f, ::Type{B}, t::NED{A}) where {A,B}
     @match t begin
         Leaf(v) => Leaf{B}(f(v[]))
@@ -130,6 +134,14 @@ end
     @test map(x -> x + 1, Int, Node(:home => Leaf(1))) == Node(:home => Leaf(2))
 end
 
+"""
+  filtermap(f, ::Type{B}, t::NED{A}) where {A,B}
+
+Given a filter `f`, its return type `Some(::B)`, recurse through a tree `t` applying a `f`.
+
+Returns a Some(::Vector{NED{B}})
+
+"""
 function filtermap(f, ::Type{B}, t::NED{A}) where {A,B}
     @match t begin
         Leaf(v) => @match f(v[]) begin
@@ -157,6 +169,11 @@ end
     @test filtermap(x -> isodd(x) ? Some(x + 1) : nothing, Int, t).value == Node(:a => Leaf(2))
 end
 
+"""
+  singleton(p::AbstractPath, v::A, B::Type=A) where A
+
+Produces a tree with whose only value `v` is at a `path`
+"""
 function singleton(p::AbstractPath, v::A, B::Type=A) where {A}
     if isempty(p)
         Leaf{B}(v)
@@ -172,6 +189,11 @@ export singleton
     @test singleton(Path([:a, :b]), 2) == Node(:a => Node(:b => Leaf(2)))
 end
 
+"""
+  lookup(t::NED, p::AbstractPath)
+
+Given a tree `t`, return a value at a `path` or nothing.
+"""
 function lookup(t::NED, p::AbstractPath)
     @match t begin
         Leaf(x) =>
@@ -198,6 +220,12 @@ export lookup
     @test lookup(Leaf(2), Path([])) == Some(2)
 end
 
+"""
+  setatpath!(t::NED{A}, v::A, p::AbstractPath) where {A}
+
+Set the value of the node at path `p` to be `v`
+
+"""
 function setatpath!(t::NED{A}, v::A, p::AbstractPath) where {A}
     @match t begin
         Leaf(x) =>
@@ -269,6 +297,11 @@ function Base.first(t::NED{A}) where {A}
     end
 end
 
+"""
+  traverse(f, t, p)
+
+Traverse the tree to apply `f(leaf_path::Path, leaf_value)` to each node and its path.
+"""
 function traverse(f, t, p=Path([]))
     @match t begin
         Leaf(v) => f(p, v[])
