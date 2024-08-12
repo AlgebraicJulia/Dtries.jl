@@ -315,6 +315,10 @@ end
     @test frompairs(pairs(d2)) == d2
 end
 
+function Dtry{A}() where {A}
+  Empty{A}()
+end
+
 function Dtry{A}(pairs::Vector) where {A}
     frompairs(pairs, A)
 end
@@ -334,6 +338,7 @@ function Dtry(pair, pairs...)
 end
 
 @tests Dtry begin
+    @test Dtry{Int}() isa Dtry
     @test Dtry(Path([:a]) => 2) == Node(:a => Leaf(2))
     @test Dtry([:a] => 2) == Node(:a => Leaf(2))
     @test_throws Exception Dtry([:a] => 2, [:a, :b] => 3)

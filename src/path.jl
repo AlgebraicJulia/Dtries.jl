@@ -6,6 +6,7 @@ abstract type AbstractPath end
 struct Path <: AbstractPath
     segments::Vector{Symbol}
 end
+export Path
 
 function Base.length(p::Path)
     length(p.segments)
