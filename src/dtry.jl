@@ -229,7 +229,7 @@ end
 
 function setatpath!(d::Dtry{A}, v::A, p::AbstractPath) where {A}
     @match d begin
-        Empty() => (d.content = NonEmptyDtries.singleton(p, v))
+        Empty() => (d.content = NonEmptyDtries.singleton(p, v, A))
         NonEmpty(t) => NonEmptyDtries.setatpath!(t, v, p)
     end
 end
@@ -279,20 +279,20 @@ returns Vector{Pair{Path, Value}}
 """
 function Base.pairs(t::Dtry{A}) where {A}
     @match t begin
-        Empty() => Pair{Path, A}[]
+        Empty() => Pair{Path,A}[]
         NonEmpty(t) => pairs(t)
     end
 end
 
 @tests pairs begin
-    @test pairs(Empty{Int}()) == Pair{Path, Int}[]
+    @test pairs(Empty{Int}()) == Pair{Path,Int}[]
     t1 = Node(:a => Leaf(1))
     @test pairs(t1) == [Path([:a]) => 1]
     t2 = Node(:b => Node(:c => Leaf(3), :b => Leaf(2)), :a => Leaf(1))
     @test pairs(t2) == [Path([:a]) => 1, Path([:b, :b]) => 2, Path([:b, :c]) => 3]
 end
 
-function frompairs(pairs::Vector{Pair{Path, A}}, B::Type=A) where {A}
+function frompairs(pairs::Vector{Pair{Path,A}}, B::Type=A) where {A}
     d = Empty{B}()
     for (p, v) in pairs
         d[p] = v
@@ -300,7 +300,7 @@ function frompairs(pairs::Vector{Pair{Path, A}}, B::Type=A) where {A}
     d
 end
 
-function frompairs(pairs::Vector{Pair{Vector{Symbol}, A}}, B::Type=A) where {A}
+function frompairs(pairs::Vector{Pair{Vector{Symbol},A}}, B::Type=A) where {A}
     d = Empty{B}()
     for (p, v) in pairs
         d[p] = v
@@ -351,7 +351,7 @@ end
     @test Dtry{Int}() == Empty{Int}()
 end
 
-function flatmap(f, ::Type{B}, d::Dtry{A})::Dtry{B} where {A, B}
+function flatmap(f, ::Type{B}, d::Dtry{A})::Dtry{B} where {A,B}
     Dtry{B}(NonEmptyDtries.flatfiltermap(d -> content(f(d)), B, content(d)))
 end
 

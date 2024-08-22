@@ -242,7 +242,7 @@ function setatpath!(t::NED{A}, v::A, p::AbstractPath) where {A}
                 error("violated prefix-free invariant for Dtries")
             else
                 @match bs[head(p)] begin
-                    ::Nothing => (bs[head(p)] = singleton(tail(p), v))
+                    ::Nothing => (bs[head(p)] = singleton(tail(p), v, A))
                     Some(t′) => setatpath!(t′, v, tail(p))
                 end
             end
@@ -321,8 +321,8 @@ Given `path`, assuming `v1` is a Leaf and `v2` is a Node, we expect
 
 Node(SortedPath[(k1=>v1), (k1=>v2) ...) => [([path..., k1] => v1, pairs([path..., k2], v2)]
 """
-function Base.pairs(t::NED{A})::Vector{Pair{Path, A}} where {A}
-    ps = Pair{Path, A}[]
+function Base.pairs(t::NED{A})::Vector{Pair{Path,A}} where {A}
+    ps = Pair{Path,A}[]
     traverse((p, v) -> push!(ps, p => v), t)
     ps
 end
@@ -371,11 +371,11 @@ Base.keys(t) = Base.propertynames(t)
 """
 f::A -> NED{B}
 """
-function flatmap(f, ::Type{B}, t::NED{A})::NED{B} where {A, B}
+function flatmap(f, ::Type{B}, t::NED{A})::NED{B} where {A,B}
     @match t begin
         Leaf(v) => f(v[])::NED{B}
         Node(bs) => Node{B}(
-            NESM{Symbol, NED{B}}([n => flatmap(f, B, v) for (n, v) in pairs(bs)], true)
+            NESM{Symbol,NED{B}}([n => flatmap(f, B, v) for (n, v) in pairs(bs)], true)
         )
     end
 end
@@ -391,11 +391,11 @@ f::A -> Union{NED{B}, Nothing}
 
 For use in `flatmap` for Dtries
 """
-function flatfiltermap(f, ::Type{B}, t::NED{A})::Union{NED{B}, Nothing} where {A, B}
+function flatfiltermap(f, ::Type{B}, t::NED{A})::Union{NED{B},Nothing} where {A,B}
     @match t begin
-        Leaf(v) => f(v[])::Union{NED{B}, Nothing}
+        Leaf(v) => f(v[])::Union{NED{B},Nothing}
         Node(bs) => begin
-            bs2 = Pair{Symbol, NED{B}}[]
+            bs2 = Pair{Symbol,NED{B}}[]
             for (n, v) in pairs(bs)
                 v2 = flatfiltermap(f, B, v)
                 if !isnothing(v2)
@@ -403,7 +403,7 @@ function flatfiltermap(f, ::Type{B}, t::NED{A})::Union{NED{B}, Nothing} where {A
                 end
             end
             if !isempty(bs2)
-                Node{B}(NESM{Symbol, NED{B}}(bs2, true))
+                Node{B}(NESM{Symbol,NED{B}}(bs2, true))
             end
         end
     end
