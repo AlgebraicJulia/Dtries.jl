@@ -327,13 +327,17 @@ function Dtry(pairs::Vector)
     frompairs(pairs)
 end
 
-function Dtry{A}(pairs...) where {A}
-    frompairs([pairs...], A)
+function Dtry{A}(pair::Pair, pairs...) where {A}
+    frompairs([pair, pairs...], A)
+end
+
+function Dtry{A}() where {A}
+    Empty{A}()
 end
 
 # We don't allow Dtry(), because that would have to be typed as Dtry{Any}, which
 # would lead to pain and suffering
-function Dtry(pair, pairs...)
+function Dtry(pair::Pair, pairs...)
     frompairs([pair, pairs...])
 end
 
@@ -341,8 +345,10 @@ end
     @test Dtry{Int}() isa Dtry
     @test Dtry(Path([:a]) => 2) == Node(:a => Leaf(2))
     @test Dtry([:a] => 2) == Node(:a => Leaf(2))
+    @test Dtry(Symbol[] => 2) == Leaf(2)
     @test_throws Exception Dtry([:a] => 2, [:a, :b] => 3)
     @test_throws MethodError Dtry()
+    @test Dtry{Int}() == Empty{Int}()
 end
 
 function flatmap(f, ::Type{B}, d::Dtry{A})::Dtry{B} where {A, B}
