@@ -1,7 +1,7 @@
-module NonEmptyDtrys
+module NonEmptyDtries
 
 using ..SortedMaps
-using ..Dtrys: AbstractPath, Path, head
+using ..Dtries: AbstractPath, Path, head
 
 using Test: AbstractTestSet
 using MLStyle
@@ -232,11 +232,11 @@ function setatpath!(t::NED{A}, v::A, p::AbstractPath) where {A}
             if isempty(p)
                 x[] = v
             else
-                error("violated prefix-free invariant for Dtrys")
+                error("violated prefix-free invariant for Dtries")
             end
         Node(bs) =>
             if isempty(p)
-                error("violated prefix-free invariant for Dtrys")
+                error("violated prefix-free invariant for Dtries")
             else
                 @match bs[head(p)] begin
                     ::Nothing => (bs[head(p)] = singleton(tail(p), v))
@@ -386,7 +386,7 @@ end
 """
 f::A -> Union{NED{B}, Nothing}
 
-For use in `flatmap` for Dtrys
+For use in `flatmap` for Dtries
 """
 function flatfiltermap(f, ::Type{B}, t::NED{A})::Union{NED{B}, Nothing} where {A, B}
     @match t begin
