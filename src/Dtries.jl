@@ -1,6 +1,6 @@
 module Dtries
 
-include("SortedMaps.jl")
+include("NonEmptySortedMaps.jl")
 
 include("path.jl")
 include("NonEmptyDtries.jl")

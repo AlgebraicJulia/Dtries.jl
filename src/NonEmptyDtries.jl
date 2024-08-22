@@ -1,6 +1,6 @@
 module NonEmptyDtries
 
-using ..SortedMaps
+using ..NonEmptySortedMaps
 using ..Dtries: AbstractPath, Path, head
 
 using Test: AbstractTestSet
@@ -14,13 +14,16 @@ struct LeafStorage{A}
 end
 
 struct NodeStorage{X}
-    branches::SortedMap{Symbol,X}
+    branches::NESM{Symbol,X}
 end
 
-# A NED is a Non-Empty Dtry
-struct NED{A}
-    content::Union{LeafStorage{A},NodeStorage{NED{A}}}
+struct NonEmptyDtry{A}
+    content::Union{LeafStorage{A},NodeStorage{NonEmptyDtry{A}}}
 end
+export NonEmptyDtry
+
+const NED = NonEmptyDtry
+export NED
 
 content(t::NED) = getfield(t, :content)
 
@@ -47,18 +50,18 @@ end
 ## Nodes are vertices on a NED
 struct Node{A} end
 
-# They may consume a SortedMap and return a NED with a NodeStorage value
-function Node{A}(m::SortedMap{Symbol,NED{A}}) where {A}
+# They may consume a NESM and return a NED with a NodeStorage value
+function Node{A}(m::NESM{Symbol,NED{A}}) where {A}
     NED{A}(NodeStorage{NED{A}}(m))
 end
 
-function Node(m::SortedMap{Symbol,NED{A}}) where {A}
+function Node(m::NESM{Symbol,NED{A}}) where {A}
     Node{A}(m)
 end
 
-# They may also consume pairs Symbol => NED and produce a SortedMap
+# They may also consume pairs Symbol => NED and produce a NESM
 function Node(pair::Pair{Symbol,NED{A}}, pairs...) where {A}
-    Node(SortedMap{Symbol,NED{A}}(pair, pairs...))
+    Node(NESM{Symbol,NED{A}}(pair, pairs...))
 end
 
 @active Node(t) begin
@@ -126,7 +129,7 @@ function Base.map(f, ::Type{B}, t::NED{A}) where {A,B}
     @match t begin
         Leaf(v) => Leaf{B}(f(v[]))
         Node(bs) =>
-            Node{B}(SortedMap([n => map(f, B, t′) for (n, t′) in pairs(bs)], true))
+            Node{B}(NESM([n => map(f, B, t′) for (n, t′) in pairs(bs)], true))
     end
 end
 
@@ -157,7 +160,7 @@ function filtermap(f, ::Type{B}, t::NED{A}) where {A,B}
                 end
             end
             if !isempty(bs′)
-                Some(Node{B}(SortedMap(bs′, true)))
+                Some(Node{B}(NESM(bs′, true)))
             end
         end
     end
@@ -274,7 +277,7 @@ function zipwith(f, t1::NED{A}, t2::NED{B}) where {A,B}
                 right tree: $(keys(bs2))
             ")
             Node(
-                SortedMap(
+                NESM(
                     [n => zipwith(f, s1, s2) for ((n, s1), (_, s2)) in zip(pairs(bs1), pairs(bs2))]
                 )
             )
@@ -372,7 +375,7 @@ function flatmap(f, ::Type{B}, t::NED{A})::NED{B} where {A, B}
     @match t begin
         Leaf(v) => f(v[])::NED{B}
         Node(bs) => Node{B}(
-            SortedMap{Symbol, NED{B}}([n => flatmap(f, B, v) for (n, v) in pairs(bs)], true)
+            NESM{Symbol, NED{B}}([n => flatmap(f, B, v) for (n, v) in pairs(bs)], true)
         )
     end
 end
@@ -400,7 +403,7 @@ function flatfiltermap(f, ::Type{B}, t::NED{A})::Union{NED{B}, Nothing} where {A
                 end
             end
             if !isempty(bs2)
-                Node{B}(SortedMap{Symbol, NED{B}}(bs2, true))
+                Node{B}(NESM{Symbol, NED{B}}(bs2, true))
             end
         end
     end
